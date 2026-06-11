@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+backend/vendor/
+frontend/node_modules/
+
+# Environment files
+.env
+backend/.env
+frontend/.env
+
+# IDE / Editor folders
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

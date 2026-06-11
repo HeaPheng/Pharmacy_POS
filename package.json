@@ -1,0 +1,15 @@
+{
+  "name": "pharmacy-system",
+  "version": "1.0.0",
+  "description": "Pharmacy Management System - Full Stack",
+  "scripts": {
+    "sync-env": "node -e \"const fs = require('fs'); if (fs.existsSync('.env')) { if (fs.existsSync('backend')) fs.copyFileSync('.env', 'backend/.env'); if (fs.existsSync('frontend')) fs.copyFileSync('.env', 'frontend/.env'); console.log('Env files synced to backend and frontend.'); } else { console.error('.env file not found at root!'); }\"",
+    "install:all": "npm install && npm install --prefix frontend && composer install --working-dir=backend",
+    "dev:backend": "cd backend && php artisan serve",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "npm run sync-env && concurrently --kill-others \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

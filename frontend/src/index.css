@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Font: Poppins for English (default), Hanuman for Khmer */
+html {
+  font-family: 'Poppins', sans-serif;
+}
+
+html.font-khmer {
+  font-family: 'Hanuman', 'Poppins', serif;
+}
+
+body {
+  background-color: #f8fafc;
+  color: #1e293b;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+html.dark body {
+  background-color: #0b0f19;
+  color: #f1f5f9;
+}
+
+/* Custom animations for modals, cards, and page transitions */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Hide scrollbar for category filter bar */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─── Print-Only Stylesheet ─── */
+@media print {
+  /* Reset backgrounds and colors for clean printing */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Hide everything except the invoice document */
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide nav, buttons, decorative gradients, and action bars */
+  header,
+  .no-print,
+  nav,
+  footer,
+  .fixed {
+    display: none !important;
+  }
+
+  /* Remove dark mode background from wrapper */
+  .min-h-screen {
+    background: white !important;
+    min-height: auto !important;
+  }
+
+  /* Remove padding from main container */
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  /* The invoice document itself */
+  .invoice-document {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure table rows don't break across pages */
+  tr {
+    page-break-inside: avoid;
+  }
+
+  /* Set A4-friendly margins */
+  @page {
+    margin: 10mm;
+    size: A4;
+  }
+}
