@@ -1,24 +1,32 @@
 import { useState } from 'react';
 import { useItems, useCreateItem, useUpdateItem, useDeleteItem, useCategories } from '../hooks/useApi';
-import { useTranslation } from '../i18n/translations';
+import { useTranslation, getCategoryDisplayName } from '../i18n/translations';
 import ItemForm from '../components/ItemForm';
 import ItemCard from '../components/ItemCard';
 import CategoryManagerModal from '../components/CategoryManagerModal';
+import ProductDetailModal from '../components/ProductDetailModal';
 
 export default function StockPage() {
   const [editingItem, setEditingItem] = useState(null);
   const [isAddingStock, setIsAddingStock] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedAgeGroup, setSelectedAgeGroup] = useState('');
+  const [selectedTherapeutic, setSelectedTherapeutic] = useState('');
+  const [selectedFormulation, setSelectedFormulation] = useState('');
   const [showCategoryManager, setShowCategoryManager] = useState(false);
-  const { t } = useTranslation();
+  const [viewingItem, setViewingItem] = useState(null);
+  const { t, lang } = useTranslation();
 
   const { data: items = [], isLoading, isError } = useItems({});
   const { data: categories = [] } = useCategories();
   const createItem = useCreateItem();
   const updateItem = useUpdateItem();
   const deleteItem = useDeleteItem();
+
+  const ageGroupCats = categories.filter((c) => c.type === 'age_group');
+  const therapeuticCats = categories.filter((c) => c.type === 'therapeutic' || !c.type);
+  const formulationCats = categories.filter((c) => c.type === 'formulation');
 
   const handleSubmit = async (formData) => {
     try {
@@ -58,17 +66,61 @@ export default function StockPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Filter items by search query and category (client-side for responsiveness)
+  const getFilteredCount = (type, categoryId) => {
+    return items.filter((item) => {
+      const matchesSearch = !searchQuery ||
+        item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.categories?.some((cat) => cat.name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        item.provider?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      if (!matchesSearch) return false;
+
+      if (type !== 'age_group') {
+        const matchesAgeGroup = !selectedAgeGroup ||
+          item.categories?.some((cat) => cat.id === parseInt(selectedAgeGroup));
+        if (!matchesAgeGroup) return false;
+      } else {
+        const matchesAgeGroup = item.categories?.some((cat) => cat.id === categoryId);
+        if (!matchesAgeGroup) return false;
+      }
+
+      if (type !== 'therapeutic') {
+        const matchesTherapeutic = !selectedTherapeutic ||
+          item.categories?.some((cat) => cat.id === parseInt(selectedTherapeutic));
+        if (!matchesTherapeutic) return false;
+      } else {
+        const matchesTherapeutic = item.categories?.some((cat) => cat.id === categoryId);
+        if (!matchesTherapeutic) return false;
+      }
+
+      if (type !== 'formulation') {
+        const matchesFormulation = !selectedFormulation ||
+          item.categories?.some((cat) => cat.id === parseInt(selectedFormulation));
+        if (!matchesFormulation) return false;
+      } else {
+        const matchesFormulation = item.categories?.some((cat) => cat.id === categoryId);
+        if (!matchesFormulation) return false;
+      }
+
+      return true;
+    }).length;
+  };
+
   const filteredItems = items.filter((item) => {
     const matchesSearch = !searchQuery ||
       item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.categories?.some((cat) => cat.name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
       item.provider?.name?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesCategory = !selectedCategory ||
-      item.categories?.some((cat) => cat.id === parseInt(selectedCategory));
+    const matchesAgeGroup = !selectedAgeGroup ||
+      item.categories?.some((cat) => cat.id === parseInt(selectedAgeGroup));
 
-    return matchesSearch && matchesCategory;
+    const matchesTherapeutic = !selectedTherapeutic ||
+      item.categories?.some((cat) => cat.id === parseInt(selectedTherapeutic));
+
+    const matchesFormulation = !selectedFormulation ||
+      item.categories?.some((cat) => cat.id === parseInt(selectedFormulation));
+
+    return matchesSearch && matchesAgeGroup && matchesTherapeutic && matchesFormulation;
   });
 
   return (
@@ -119,10 +171,10 @@ export default function StockPage() {
       </div>
 
       {/* Search Bar & Actions */}
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-        <div className="flex flex-col sm:flex-row gap-3 flex-1 max-w-2xl">
+      <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between animate-fade-in">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 flex-1">
           {/* Search Input */}
-          <div className="relative flex-1">
+          <div className="relative">
             <svg
               className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500"
               fill="none"
@@ -140,20 +192,52 @@ export default function StockPage() {
             />
           </div>
 
-          {/* Category Dropdown */}
+          {/* Age Group Dropdown */}
           <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-755 dark:text-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 shadow-sm cursor-pointer"
+            value={selectedAgeGroup}
+            onChange={(e) => setSelectedAgeGroup(e.target.value)}
+            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-755 dark:text-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 shadow-sm cursor-pointer w-full"
           >
-            <option value="">{t('sell.categoryFilterAll')} ({items.length})</option>
-            {categories.map((cat) => {
-              const count = items.filter((item) =>
-                item.categories?.some((c) => c.id === cat.id)
-              ).length;
+            <option value="">{t('kh' === t('common.save') ? 'គ្រប់ក្រុមអ្នកជំងឺ' : 'All Groups')}</option>
+            {ageGroupCats.map((cat) => {
+              const count = getFilteredCount('age_group', cat.id);
               return (
                 <option key={cat.id} value={cat.id}>
-                  {cat.name} ({count})
+                  {getCategoryDisplayName(cat.name, lang)} ({count})
+                </option>
+              );
+            })}
+          </select>
+
+          {/* Therapeutic Dropdown */}
+          <select
+            value={selectedTherapeutic}
+            onChange={(e) => setSelectedTherapeutic(e.target.value)}
+            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-755 dark:text-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 shadow-sm cursor-pointer w-full"
+          >
+            <option value="">{t('kh' === t('common.save') ? 'គ្រប់ប្រភេទព្យាបាល' : 'All Categories')}</option>
+            {therapeuticCats.map((cat) => {
+              const count = getFilteredCount('therapeutic', cat.id);
+              return (
+                <option key={cat.id} value={cat.id}>
+                  {getCategoryDisplayName(cat.name, lang)} ({count})
+                </option>
+              );
+            })}
+          </select>
+
+          {/* Formulation Dropdown */}
+          <select
+            value={selectedFormulation}
+            onChange={(e) => setSelectedFormulation(e.target.value)}
+            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-755 dark:text-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 shadow-sm cursor-pointer w-full"
+          >
+            <option value="">{t('kh' === t('common.save') ? 'គ្រប់ទម្រង់ថ្នាំ' : 'All Formulations')}</option>
+            {formulationCats.map((cat) => {
+              const count = getFilteredCount('formulation', cat.id);
+              return (
+                <option key={cat.id} value={cat.id}>
+                  {getCategoryDisplayName(cat.name, lang)} ({count})
                 </option>
               );
             })}
@@ -162,7 +246,7 @@ export default function StockPage() {
 
         <button
           onClick={() => setShowCategoryManager(true)}
-          className="px-5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-650 dark:text-slate-300 rounded-xl text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] shrink-0"
+          className="px-5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-650 dark:text-slate-300 rounded-xl text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] shrink-0 lg:mt-0"
         >
           <svg className="w-4 h-4 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -173,7 +257,7 @@ export default function StockPage() {
 
       {/* Items Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-4">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl h-60 animate-pulse shadow-sm" />
           ))}
@@ -194,11 +278,12 @@ export default function StockPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-4">
           {filteredItems.map((item) => (
             <ItemCard
               key={item.id}
               item={item}
+              onView={(itm) => setViewingItem(itm)}
               onEdit={handleEdit}
               onDelete={handleDelete}
               isDeleting={deletingId === item.id}
@@ -212,6 +297,13 @@ export default function StockPage() {
         isOpen={showCategoryManager}
         onClose={() => setShowCategoryManager(false)}
         items={items}
+      />
+
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        item={viewingItem}
+        isOpen={!!viewingItem}
+        onClose={() => setViewingItem(null)}
       />
     </div>
   );

@@ -66,7 +66,7 @@ const translations = {
         boxes: "Boxes",
         pcsPerBox: "Pcs/Box",
         totalPcs: "Total Pcs",
-        unitPrice: "Unit Price",
+        unitPrice: "Box Price",
         actions: "Actions"
       },
       form: {
@@ -76,12 +76,19 @@ const translations = {
         image: "Product Image",
         boxesQty: "Boxes Qty",
         pcsPerBox: "Pcs per Box",
-        unitPrice: "Unit Price (៛)",
+        unitPrice: "Box Price (៛)",
         categorySelect: "Select Category",
+        formulation: "Dosage Form",
+        formulationSelect: "Select Formulation",
+        therapeutic: "Therapeutic Class",
+        therapeuticSelect: "Select Therapeutic Class",
+        ageGroup: "Patient/Age Group",
+        ageGroupSelect: "Select Patient Group",
         providerSelect: "Select Provider",
         imageUploadHint: "Click to upload product image",
         creating: "Creating...",
-        saving: "Saving..."
+        saving: "Saving...",
+        pleaseSelectProvider: "Please select a provider"
       }
     },
     sell: {
@@ -141,7 +148,7 @@ const translations = {
       table: {
         item: "Item Name",
         qty: "Qty (boxes/pcs)",
-        unitPrice: "Unit Price",
+        unitPrice: "Box Price",
         subtotal: "Subtotal"
       },
       grandTotal: "Grand Total",
@@ -242,7 +249,7 @@ const translations = {
         boxes: "ប្រអប់",
         pcsPerBox: "គ្រាប់/ប្រអប់",
         totalPcs: "ចំនួនគ្រាប់សរុប",
-        unitPrice: "តម្លៃរាយ",
+        unitPrice: "តម្លៃប្រអប់",
         actions: "សកម្មភាព"
       },
       form: {
@@ -252,12 +259,19 @@ const translations = {
         image: "រូបភាពផលិតផល",
         boxesQty: "ចំនួនប្រអប់",
         pcsPerBox: "ចំនួនគ្រាប់ក្នុងមួយប្រអប់",
-        unitPrice: "តម្លៃរាយ (៛)",
+        unitPrice: "តម្លៃប្រអប់ (៛)",
         categorySelect: "ជ្រើសរើសប្រភេទ",
+        formulation: "ទម្រង់ថ្នាំ",
+        formulationSelect: "ជ្រើសរើសទម្រង់ថ្នាំ",
+        therapeutic: "ក្រុមប្រភេទទម្រង់ព្យាបាល",
+        therapeuticSelect: "ជ្រើសរើសក្រុមប្រភេទទម្រង់ព្យាបាល",
+        ageGroup: "ក្រុមអាយុអ្នកជំងឺ",
+        ageGroupSelect: "ជ្រើសរើសក្រុមអ្នកជំងឺ",
         providerSelect: "ជ្រើសរើសអ្នកផ្គត់ផ្គង់",
         imageUploadHint: "ចុចដើម្បីផ្ទុកឡើងរូបភាពផលិតផល",
         creating: "កំពុងបង្កើត...",
-        saving: "កំពុងរក្សាទុក..."
+        saving: "កំពុងរក្សាទុក...",
+        pleaseSelectProvider: "សូមជ្រើសរើសអ្នកផ្គត់ផ្គង់"
       }
     },
     sell: {
@@ -317,7 +331,7 @@ const translations = {
       table: {
         item: "ឈ្មោះទំនិញ",
         qty: "ចំនួន (ប្រអប់/គ្រាប់)",
-        unitPrice: "តម្លៃឯកតា",
+        unitPrice: "តម្លៃប្រអប់",
         subtotal: "សរុបរង"
       },
       grandTotal: "សរុបរួម",
@@ -431,4 +445,31 @@ export const useTranslation = () => {
     throw new Error('useTranslation must be used within a LanguageProvider');
   }
   return context;
+};
+
+export const getCategoryDisplayName = (name, lang = 'en') => {
+  if (!name) return '';
+  const translations = {
+    'Kids': 'កុមារ',
+    'Adults': 'មនុស្សពេញវ័យ',
+    'Elderly': 'មនុស្សចាស់',
+    'Antibiotics': 'ថ្នាំផ្សះ',
+    'Vitamins': 'វីតាមីន',
+    'Painkillers': 'ថ្នាំបំបាត់ការឈឺចាប់',
+    'Gastrointestinal': 'ថ្នាំក្រពះពោះវៀន',
+    'Cardiovascular': 'ថ្នាំបេះដូង-សរសៃឈាម',
+    'Respiratory': 'ថ្នាំផ្លូវដង្ហើម',
+    'Skincare': 'ថែរក្សាស្បែក',
+    'Equipment': 'ឧបករណ៍វេជ្ជសាស្ត្រ',
+    'Tablets': 'ថ្នាំគ្រាប់',
+    'Capsules': 'ថ្នាំកន្សោម',
+    'Liquid / Syrup': 'ថ្នាំទឹក',
+    'Injections': 'ថ្នាំចាក់',
+    'Cream / Ointment': 'ថ្នាំលាប',
+    'Spray / Inhaler': 'ថ្នាំបាញ់'
+  };
+
+  const kh = translations[name];
+  if (!kh) return name;
+  return lang === 'kh' ? `${name} / ${kh}` : name;
 };

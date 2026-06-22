@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useCategories, useCreateCategory, useProviders, useItems } from '../hooks/useApi';
-import { useTranslation } from '../i18n/translations';
+import { useTranslation, getCategoryDisplayName } from '../i18n/translations';
 import ProviderModal from './ProviderModal';
+import toast from 'react-hot-toast';
 
 const API_BASE = (() => {
   if (typeof window !== 'undefined' && import.meta.env.DEV) {
@@ -26,8 +27,10 @@ export default function ItemForm({ editingItem, onSubmit, onCancel, isPending, o
   const [form, setForm] = useState(EMPTY_FORM);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [showNewCategory, setShowNewCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
+  const [showNewFormulationInput, setShowNewFormulationInput] = useState(false);
+  const [newFormulationName, setNewFormulationName] = useState('');
+  const [showNewTherapeuticInput, setShowNewTherapeuticInput] = useState(false);
+  const [newTherapeuticName, setNewTherapeuticName] = useState('');
   const [showProviderModal, setShowProviderModal] = useState(false);
   const fileInputRef = useRef(null);
   const categoryDropdownRef = useRef(null);
@@ -36,12 +39,16 @@ export default function ItemForm({ editingItem, onSubmit, onCancel, isPending, o
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showCodeSuggestions, setShowCodeSuggestions] = useState(false);
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
 
   const { data: categories = [] } = useCategories();
   const { data: providers = [] } = useProviders();
   const { data: items = [] } = useItems({});
   const createCategory = useCreateCategory();
+
+  const ageGroupCats = categories.filter((c) => c.type === 'age_group');
+  const therapeuticCats = categories.filter((c) => c.type === 'therapeutic' || !c.type);
+  const formulationCats = categories.filter((c) => c.type === 'formulation');
 
   useEffect(() => {
     if (editingItem) {
@@ -100,13 +107,11 @@ export default function ItemForm({ editingItem, onSubmit, onCancel, isPending, o
     }
   };
 
-  const handleCreateCategory = async () => {
-    if (!newCategoryName.trim()) return;
+  const handleCreateCategory = async (type = 'therapeutic', nameValue) => {
+    if (!nameValue.trim()) return;
     try {
-      const cat = await createCategory.mutateAsync({ name: newCategoryName.trim() });
-      setForm({ ...form, category_ids: [...form.category_ids, cat.id] });
-      setNewCategoryName('');
-      setShowNewCategory(false);
+      const cat = await createCategory.mutateAsync({ name: nameValue.trim(), type });
+      return cat;
     } catch (err) {
       console.error('Failed to create category:', err);
     }
@@ -114,6 +119,10 @@ export default function ItemForm({ editingItem, onSubmit, onCancel, isPending, o
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!form.provider_id) {
+      toast.error(t('stock.form.pleaseSelectProvider') || 'Please select a provider');
+      return;
+    }
     const formData = new FormData();
     Object.entries(form).forEach(([key, value]) => {
       if (key === 'category_ids') {
@@ -272,23 +281,33 @@ export default function ItemForm({ editingItem, onSubmit, onCancel, isPending, o
               )}
             </div>
 
-            {/* Category */}
-            <div className="relative" ref={categoryDropdownRef}>
+            {/* Dosage Form (Formulation) */}
+            <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                {t('stock.table.category')}
+                {t('stock.form.formulation')}
               </label>
-              {showNewCategory ? (
+              {showNewFormulationInput ? (
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                    placeholder="New category name"
+                    value={newFormulationName}
+                    onChange={(e) => setNewFormulationName(e.target.value)}
+                    placeholder="New formulation name (e.g. Tablets)"
                     className="flex-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all shadow-sm"
                   />
                   <button
                     type="button"
-                    onClick={handleCreateCategory}
+                    onClick={async () => {
+                      if (!newFormulationName.trim()) return;
+                      const cat = await handleCreateCategory('formulation', newFormulationName);
+                      if (cat) {
+                        const baseIds = form.category_ids.filter(id => !formulationCats.some(c => c.id === id));
+                        baseIds.push(cat.id);
+                        setForm((prev) => ({ ...prev, category_ids: baseIds }));
+                        setNewFormulationName('');
+                        setShowNewFormulationInput(false);
+                      }
+                    }}
                     disabled={createCategory.isPending}
                     className="px-3 py-2 rounded-lg text-xs font-bold bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50 transition-colors cursor-pointer"
                   >
@@ -297,29 +316,99 @@ export default function ItemForm({ editingItem, onSubmit, onCancel, isPending, o
                   <button
                     type="button"
                     onClick={() => {
-                      setShowNewCategory(false);
-                      setNewCategoryName('');
+                      setShowNewFormulationInput(false);
+                      setNewFormulationName('');
                     }}
-                    className="px-3 py-2 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 text-slate-550 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="px-3 py-2 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <select
+                    value={form.category_ids.find(id => formulationCats.some(c => c.id === id)) || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const baseIds = form.category_ids.filter(id => !formulationCats.some(c => c.id === id));
+                      if (val) {
+                        baseIds.push(Number(val));
+                      }
+                      setForm({ ...form, category_ids: baseIds });
+                    }}
+                    className="flex-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all shadow-sm cursor-pointer"
+                  >
+                    <option value="">{t('stock.form.formulationSelect')}</option>
+                    {formulationCats.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{getCategoryDisplayName(cat.name, lang)}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewFormulationInput(true)}
+                    className="px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Therapeutic Category */}
+            <div className="relative" ref={categoryDropdownRef}>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                {t('stock.form.therapeutic')}
+              </label>
+              {showNewTherapeuticInput ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newTherapeuticName}
+                    onChange={(e) => setNewTherapeuticName(e.target.value)}
+                    placeholder="New therapeutic class"
+                    className="flex-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all shadow-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!newTherapeuticName.trim()) return;
+                      const cat = await handleCreateCategory('therapeutic', newTherapeuticName);
+                      if (cat) {
+                        setForm((prev) => ({ ...prev, category_ids: [...prev.category_ids, cat.id] }));
+                        setNewTherapeuticName('');
+                        setShowNewTherapeuticInput(false);
+                      }
+                    }}
+                    disabled={createCategory.isPending}
+                    className="px-3 py-2 rounded-lg text-xs font-bold bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50 transition-colors cursor-pointer"
+                  >
+                    {createCategory.isPending ? '...' : '+'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewTherapeuticInput(false);
+                      setNewTherapeuticName('');
+                    }}
+                    className="px-3 py-2 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     ✕
                   </button>
                 </div>
               ) : (
                 <>
-                  {/* Dropdown Toggle Button */}
                   <button
                     type="button"
                     onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                    className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all shadow-sm flex items-center justify-between cursor-pointer"
+                    className="w-full text-left bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all flex items-center justify-between shadow-sm cursor-pointer"
                   >
                     <span className="truncate">
-                      {form.category_ids.length > 0
+                      {form.category_ids.filter((id) => therapeuticCats.some((c) => c.id === id)).length > 0
                         ? categories
-                            .filter((c) => form.category_ids.includes(c.id))
-                            .map((c) => c.name)
+                            .filter((c) => form.category_ids.includes(c.id) && (c.type === 'therapeutic' || !c.type))
+                            .map((c) => getCategoryDisplayName(c.name, lang))
                             .join(', ')
-                        : t('stock.form.categorySelect')}
+                        : t('stock.form.therapeuticSelect')}
                     </span>
                     <svg
                       className={`w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 ${
@@ -333,10 +422,9 @@ export default function ItemForm({ editingItem, onSubmit, onCancel, isPending, o
                     </svg>
                   </button>
 
-                  {/* Dropdown Panel */}
                   {showCategoryDropdown && (
                     <div className="absolute z-20 mt-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl max-h-56 overflow-y-auto p-1.5 space-y-0.5 animate-fade-in">
-                      {categories.map((cat) => {
+                      {therapeuticCats.map((cat) => {
                         const isSelected = form.category_ids.includes(cat.id);
                         return (
                           <button
@@ -351,10 +439,10 @@ export default function ItemForm({ editingItem, onSubmit, onCancel, isPending, o
                             className={`w-full px-3 py-2 text-left text-sm font-medium rounded-lg flex items-center justify-between transition-colors cursor-pointer ${
                               isSelected
                                 ? 'bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400'
-                                : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
                             }`}
                           >
-                            <span>{cat.name}</span>
+                            <span>{getCategoryDisplayName(cat.name, lang)}</span>
                             {isSelected && (
                               <svg className="w-4 h-4 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -364,22 +452,51 @@ export default function ItemForm({ editingItem, onSubmit, onCancel, isPending, o
                         );
                       })}
                       
-                      {/* Add Category Link */}
                       <button
                         type="button"
                         onClick={() => {
-                          setShowNewCategory(true);
+                          setShowNewTherapeuticInput(true);
                           setShowCategoryDropdown(false);
                         }}
                         className="w-full px-3 py-2 text-left text-sm font-bold text-teal-600 dark:text-teal-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg flex items-center gap-1.5 transition-colors border-t border-slate-100 dark:border-slate-800 mt-1 pt-2 cursor-pointer"
                       >
                         <span className="text-base font-bold">+</span>
-                        {t('kh' === t('common.save') ? 'បន្ថែមប្រភេទ' : 'Add Category')}
+                        {t('kh' === t('common.save') ? 'បន្ថែមប្រភេទព្យាបាល' : 'Add Therapeutic Class')}
                       </button>
                     </div>
                   )}
                 </>
               )}
+            </div>
+
+            {/* Patient/Age Group */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                {t('stock.form.ageGroup')}
+              </label>
+              <div className="flex flex-wrap gap-4 bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800/80 rounded-lg px-4 py-2.5">
+                {ageGroupCats.map((cat) => {
+                  const isSelected = form.category_ids.includes(cat.id);
+                  return (
+                    <label key={cat.id} className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          const nextIds = isSelected
+                            ? form.category_ids.filter((id) => id !== cat.id)
+                            : [...form.category_ids, cat.id];
+                          setForm({ ...form, category_ids: nextIds });
+                        }}
+                        className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500/20 border-slate-350 dark:border-slate-800 dark:bg-slate-950 cursor-pointer"
+                      />
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:text-teal-600 dark:group-hover:text-teal-450 transition-colors">
+                        {getCategoryDisplayName(cat.name, lang)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Provider */}

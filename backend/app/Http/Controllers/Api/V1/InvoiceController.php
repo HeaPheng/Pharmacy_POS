@@ -90,8 +90,8 @@ class InvoiceController extends Controller
                     );
                 }
 
-                // Calculate subtotal
-                $subtotal = $totalPiecesRequested * $item->unit_price;
+                // Calculate subtotal pro-rated from box price
+                $subtotal = (int) round($totalPiecesRequested * ($item->unit_price / max(1, $item->pieces_per_box)));
                 $totalAmount += $subtotal;
 
                 // Deduct stock: convert remaining pieces back to boxes

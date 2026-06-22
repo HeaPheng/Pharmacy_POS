@@ -5,7 +5,7 @@ import {
   useDeleteProvider,
   useReassignStockAddition,
 } from '../hooks/useApi';
-import { useTranslation, formatCurrency } from '../i18n/translations';
+import { useTranslation, formatCurrency, getCategoryDisplayName } from '../i18n/translations';
 
 const API_BASE = (() => {
   if (typeof window !== 'undefined' && import.meta.env.DEV) {
@@ -91,7 +91,7 @@ function DeleteModal({ provider, onConfirm, onClose, isPending }) {
 
 // ── Expanded Items Detail ────────────────────────────────────────
 function DayItemsPanel({ additions, provider, allProviders }) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const reassignStockAddition = useReassignStockAddition();
   const [reassigningAdditionId, setReassigningAdditionId] = useState(null);
 
@@ -131,7 +131,7 @@ function DayItemsPanel({ additions, provider, allProviders }) {
                       {item.categories && item.categories.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {item.categories.map((cat) => (
-                            <span key={cat.id} className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40">{cat.name}</span>
+                            <span key={cat.id} className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40">{getCategoryDisplayName(cat.name, lang)}</span>
                           ))}
                         </div>
                       )}
@@ -269,7 +269,7 @@ export default function ProvidersPage() {
                 {entries.map((entry, idx) => {
                   const key = `${entry.provider.id}-${entry.dateKey}`;
                   const isExpanded = expandedKey === key;
-                  const totalValue = entry.additions.reduce((s, add) => s + (parseFloat(add.unit_price) || 0) * (add.boxes_added || 0) * (add.item?.pieces_per_box || 1), 0);
+                  const totalValue = entry.additions.reduce((s, add) => s + (parseFloat(add.unit_price) || 0) * (add.boxes_added || 0), 0);
                   const totalBoxes = entry.additions.reduce((s, add) => s + (add.boxes_added || 0), 0);
 
                   return (

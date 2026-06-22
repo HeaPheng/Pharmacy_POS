@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useCategories, useCreateCategory, useDeleteCategory } from '../hooks/useApi';
-import { useTranslation } from '../i18n/translations';
+import { useTranslation, getCategoryDisplayName } from '../i18n/translations';
 
 export default function CategoryManagerModal({ isOpen, onClose, items = [] }) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const { data: categories = [], isLoading } = useCategories();
   const createCategory = useCreateCategory();
   const deleteCategory = useDeleteCategory();
@@ -64,7 +64,7 @@ export default function CategoryManagerModal({ isOpen, onClose, items = [] }) {
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <h3 className="text-lg font-bold">
-            {deletingCategory ? t('stock.categoryManager.deleteWarningTitle', { name: deletingCategory.name }) : t('stock.categoryManager.title')}
+            {deletingCategory ? t('stock.categoryManager.deleteWarningTitle', { name: getCategoryDisplayName(deletingCategory.name, lang) }) : t('stock.categoryManager.title')}
           </h3>
           <button
             onClick={() => {
@@ -157,7 +157,7 @@ export default function CategoryManagerModal({ isOpen, onClose, items = [] }) {
                         className="px-4 py-3 flex items-center justify-between hover:bg-slate-100/50 dark:hover:bg-slate-850 transition-colors first:rounded-t-xl last:rounded-b-xl"
                       >
                         <div>
-                          <span className="font-semibold text-sm">{cat.name}</span>
+                          <span className="font-semibold text-sm">{getCategoryDisplayName(cat.name, lang)}</span>
                           <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                             {count} {t('stock.table.item')}
                           </span>

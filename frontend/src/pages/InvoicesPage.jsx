@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useInvoices } from '../hooks/useApi';
-import { useTranslation, formatCurrency } from '../i18n/translations';
+import { useTranslation, formatCurrency, getCategoryDisplayName } from '../i18n/translations';
 
 // ── Helpers ──────────────────────────────────────────────────────
 function formatInvNumber(id) {
@@ -39,7 +39,7 @@ function getInvoiceCategories(invoice) {
 
 export default function InvoicesPage() {
   const { data: invoices = [], isLoading } = useInvoices();
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const isKh = t('common.save') === 'រក្សាទុក';
 
   // Filter states
@@ -188,7 +188,7 @@ export default function InvoicesPage() {
         >
           <option value="all">{isKh ? 'គ្រប់ប្រភេទ' : 'All Categories'}</option>
           {allCategories.map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
+            <option key={cat} value={cat}>{getCategoryDisplayName(cat, lang)}</option>
           ))}
         </select>
 

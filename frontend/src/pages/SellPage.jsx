@@ -8,7 +8,7 @@ import {
   useCreateBuyer,
   useCreateInvoice,
 } from '../hooks/useApi';
-import { useTranslation, formatCurrency } from '../i18n/translations';
+import { useTranslation, formatCurrency, getCategoryDisplayName } from '../i18n/translations';
 
 const API_BASE = (() => {
   if (typeof window !== 'undefined' && import.meta.env.DEV) {
@@ -292,45 +292,99 @@ function BuyerInfoPanel({
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Category Filter Bar
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function CategoryFilterBar({ categories, activeCategory, setActiveCategory, items = [] }) {
-  const scrollRef = useRef(null);
-  const { t } = useTranslation();
+function CategoryFilterBar({
+  categories,
+  activeAgeGroup,
+  setActiveAgeGroup,
+  activeFormulation,
+  setActiveFormulation,
+  activeTherapeutic,
+  setActiveTherapeutic,
+  getFilteredCount,
+  allAgeGroupCount,
+  allFormulationCount,
+  allTherapeuticCount
+}) {
+  const { t, lang } = useTranslation();
+
+  const ageGroupCats = categories.filter((c) => c.type === 'age_group');
+  const formulationCats = categories.filter((c) => c.type === 'formulation');
+  const therapeuticCats = categories.filter((c) => c.type === 'therapeutic' || !c.type);
+
+  const selectClass = "w-full text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl px-3 py-2.5 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all";
 
   return (
-    <div className="relative">
-      <div
-        ref={scrollRef}
-        className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        <button
-          onClick={() => setActiveCategory(null)}
-          className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 cursor-pointer ${
-            activeCategory === null
-              ? 'bg-teal-600 text-white shadow-sm hover:bg-teal-700'
-              : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-sm'
-          }`}
-        >
-          {t('sell.categoryFilterAll')} {items.length > 0 && `(${items.length})`}
-        </button>
-        {categories.map((cat) => {
-          const count = items.filter((item) =>
-            item.categories?.some((c) => c.id === cat.id)
-          ).length;
-          return (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id === activeCategory ? null : cat.id)}
-              className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 cursor-pointer ${
-                activeCategory === cat.id
-                  ? 'bg-teal-600 text-white shadow-sm hover:bg-teal-700'
-                  : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-sm'
-              }`}
-            >
-              {cat.name} ({count})
-            </button>
-          );
-        })}
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* Patient Group */}
+      <div className="space-y-1">
+        <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
+          {t('stock.form.ageGroup')}
+        </label>
+        <div className="relative">
+          <select
+            value={activeAgeGroup || ''}
+            onChange={(e) => setActiveAgeGroup(e.target.value ? Number(e.target.value) : null)}
+            className={selectClass}
+          >
+            <option value="">{t('sell.categoryFilterAll')} ({allAgeGroupCount})</option>
+            {ageGroupCats.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {getCategoryDisplayName(cat.name, lang)} ({getFilteredCount('age_group', cat.id)})
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </div>
+        </div>
+      </div>
+
+      {/* Formulation */}
+      <div className="space-y-1">
+        <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
+          {t('stock.form.formulation')}
+        </label>
+        <div className="relative">
+          <select
+            value={activeFormulation || ''}
+            onChange={(e) => setActiveFormulation(e.target.value ? Number(e.target.value) : null)}
+            className={selectClass}
+          >
+            <option value="">{t('sell.categoryFilterAll')} ({allFormulationCount})</option>
+            {formulationCats.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {getCategoryDisplayName(cat.name, lang)} ({getFilteredCount('formulation', cat.id)})
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </div>
+        </div>
+      </div>
+
+      {/* Therapeutic */}
+      <div className="space-y-1">
+        <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
+          {t('stock.form.therapeutic')}
+        </label>
+        <div className="relative">
+          <select
+            value={activeTherapeutic || ''}
+            onChange={(e) => setActiveTherapeutic(e.target.value ? Number(e.target.value) : null)}
+            className={selectClass}
+          >
+            <option value="">{t('sell.categoryFilterAll')} ({allTherapeuticCount})</option>
+            {therapeuticCats.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {getCategoryDisplayName(cat.name, lang)} ({getFilteredCount('therapeutic', cat.id)})
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -340,13 +394,15 @@ function CategoryFilterBar({ categories, activeCategory, setActiveCategory, item
 // Quantity Selector Modal
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function QuantitySelector({ item, onAdd, onClose }) {
-  const [boxes, setBoxes] = useState(0);
-  const [pieces, setPieces] = useState(0);
+  const [boxes, setBoxes] = useState('');
+  const [pieces, setPieces] = useState('');
   const { t } = useTranslation();
 
-  const totalPieces = boxes * (item.pieces_per_box || 1) + pieces;
+  const totalPieces = (parseInt(boxes) || 0) * (item.pieces_per_box || 1) + (parseInt(pieces) || 0);
   const availablePieces = (item.boxes_quantity || 0) * (item.pieces_per_box || 1);
-  const subtotal = totalPieces * parseFloat(item.unit_price || 0);
+  const boxPrice = parseFloat(item.unit_price || 0);
+  const piecePrice = boxPrice / (item.pieces_per_box || 1);
+  const subtotal = (parseInt(boxes) || 0) * boxPrice + (parseInt(pieces) || 0) * piecePrice;
   const isOverStock = totalPieces > availablePieces;
   const isZero = totalPieces === 0;
 
@@ -354,8 +410,8 @@ function QuantitySelector({ item, onAdd, onClose }) {
     if (isOverStock || isZero) return;
     onAdd({
       item,
-      quantity_boxes: boxes,
-      quantity_pieces: pieces,
+      quantity_boxes: parseInt(boxes) || 0,
+      quantity_pieces: parseInt(pieces) || 0,
       totalPieces,
       subtotal,
     });
@@ -381,7 +437,7 @@ function QuantitySelector({ item, onAdd, onClose }) {
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{item.name}</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t('sell.stock')}: {item.boxes_quantity} {t('sell.quantitySelect.box')} · {availablePieces} {t('sell.quantitySelect.pcs')} · {formatCurrency(item.unit_price)}/{t('sell.quantitySelect.pcs')}
+              {t('sell.stock')}: {item.boxes_quantity} {t('sell.quantitySelect.box')} · {availablePieces} {t('sell.quantitySelect.pcs')} · {formatCurrency(item.unit_price)}/{t('sell.quantitySelect.box')}
             </p>
           </div>
           <button onClick={onClose} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer shrink-0">
@@ -400,18 +456,18 @@ function QuantitySelector({ item, onAdd, onClose }) {
             <div className="flex items-center bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
               <button
                 type="button"
-                onClick={() => setBoxes(Math.max(0, boxes - 1))}
+                onClick={() => setBoxes(Math.max(0, (parseInt(boxes) || 0) - 1) || '')}
                 className="px-3 py-2.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >−</button>
               <input
                 type="number"
                 value={boxes}
-                onChange={(e) => setBoxes(Math.max(0, parseInt(e.target.value) || 0))}
+                onChange={(e) => { const v = e.target.value; setBoxes(v === '' ? '' : Math.max(0, parseInt(v) || 0)); }}
                 className="w-full bg-transparent text-center text-sm font-bold text-slate-800 dark:text-slate-100 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <button
                 type="button"
-                onClick={() => setBoxes(boxes + 1)}
+                onClick={() => setBoxes((parseInt(boxes) || 0) + 1)}
                 className="px-3 py-2.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >+</button>
             </div>
@@ -426,18 +482,18 @@ function QuantitySelector({ item, onAdd, onClose }) {
             <div className="flex items-center bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
               <button
                 type="button"
-                onClick={() => setPieces(Math.max(0, pieces - 1))}
+                onClick={() => setPieces(Math.max(0, (parseInt(pieces) || 0) - 1) || '')}
                 className="px-3 py-2.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >−</button>
               <input
                 type="number"
                 value={pieces}
-                onChange={(e) => setPieces(Math.max(0, parseInt(e.target.value) || 0))}
+                onChange={(e) => { const v = e.target.value; setPieces(v === '' ? '' : Math.max(0, parseInt(v) || 0)); }}
                 className="w-full bg-transparent text-center text-sm font-bold text-slate-800 dark:text-slate-100 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <button
                 type="button"
-                onClick={() => setPieces(pieces + 1)}
+                onClick={() => setPieces((parseInt(pieces) || 0) + 1)}
                 className="px-3 py-2.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >+</button>
             </div>
@@ -482,30 +538,47 @@ function QuantitySelector({ item, onAdd, onClose }) {
   );
 }
 
+const getCategoryBadgeClass = (type) => {
+  switch (type) {
+    case 'age_group':
+      return 'bg-blue-600 text-white border border-blue-500 dark:bg-blue-600 dark:text-white dark:border-blue-500 shadow-md font-extrabold uppercase tracking-wider text-[9.5px] px-2 py-0.5';
+    case 'formulation':
+      return 'bg-amber-50/90 text-amber-600 border border-amber-200/30 dark:bg-amber-950/80 dark:text-amber-400 dark:border-amber-900/30 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5';
+    case 'therapeutic':
+    default:
+      return 'bg-teal-50/90 text-teal-600 border border-teal-200/30 dark:bg-teal-950/80 dark:text-teal-400 dark:border-teal-900/30 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5';
+  }
+};
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Item Selection Card (POS version)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function PosItemCard({ item, isInCart, onSelect }) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const totalPieces = (item.boxes_quantity || 0) * (item.pieces_per_box || 1);
   const outOfStock = totalPieces === 0;
+  const isLowStock = item.boxes_quantity <= 5;
   const imageUrl = item.image_path ? `${API_BASE}/storage/${item.image_path}` : null;
+
+  const ageGroupCats = item.categories?.filter((cat) => cat.type === 'age_group') || [];
+  const formulationCats = item.categories?.filter((cat) => cat.type === 'formulation') || [];
+  const therapeuticCats = item.categories?.filter((cat) => cat.type === 'therapeutic') || [];
 
   return (
     <button
       onClick={() => !outOfStock && onSelect(item)}
       disabled={outOfStock}
-      className={`group relative text-left bg-white dark:bg-slate-900 border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 ${
+      className={`group relative text-left bg-white dark:bg-slate-900 border rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-slate-100/50 dark:hover:shadow-none hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full ${
         isInCart
           ? 'border-teal-500 ring-1 ring-teal-500/20'
           : outOfStock
           ? 'border-slate-200 dark:border-slate-800 opacity-50 cursor-not-allowed bg-slate-50 dark:bg-slate-950'
-          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer'
+          : 'border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer'
       }`}
     >
       {isInCart && (
-        <div className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-teal-600 flex items-center justify-center shadow-md">
-          <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="absolute top-2.5 right-2.5 z-20 w-7 h-7 rounded-full bg-teal-600 flex items-center justify-center shadow-lg border border-teal-500/30">
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
         </div>
@@ -520,46 +593,110 @@ function PosItemCard({ item, isInCart, onSelect }) {
       )}
 
       {/* Image */}
-      <div className="relative h-32 bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 overflow-hidden">
+      <div className="relative aspect-[4/3] bg-slate-50 dark:bg-slate-950 overflow-hidden shrink-0">
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={item.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <div className="text-3xl opacity-20">💊</div>
+            <svg className="w-12 h-12 text-slate-300 dark:text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
           </div>
         )}
-      </div>
 
-      {/* Content */}
-      <div className="p-3 space-y-2">
-        {item.categories && item.categories.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {item.categories.map((cat) => (
-              <span key={cat.id} className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 border border-teal-100/30 dark:border-teal-900/30">
+        {/* Age Group Badges (Top-Left) */}
+        {ageGroupCats.length > 0 && (
+          <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1 z-10">
+            {ageGroupCats.map((cat) => (
+              <span
+                key={cat.id}
+                className="rounded-full shadow-sm bg-blue-600 text-white border border-blue-500/30 text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-0.5"
+              >
                 {cat.name}
               </span>
             ))}
           </div>
         )}
-        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1.5">
-          {item.code && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-550 dark:text-slate-400 font-mono font-bold shrink-0">
-              {item.code}
-            </span>
+
+        {/* Dosage Form Badge (Top-Right) - Fades on hover, hidden if in cart */}
+        {formulationCats.length > 0 && !isInCart && (
+          <div className="absolute top-2.5 right-2.5 z-10 transition-all duration-300 group-hover:opacity-0 group-hover:scale-95">
+            {formulationCats.map((cat) => (
+              <span
+                key={cat.id}
+                className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider shadow-sm backdrop-blur-md bg-amber-500/90 text-white border border-amber-400/30"
+              >
+                {cat.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-3.5 flex flex-col flex-grow justify-between gap-3">
+        <div className="space-y-2">
+          {/* Therapeutic Tags in Body */}
+          {therapeuticCats.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {therapeuticCats.map((cat) => (
+                <span
+                  key={cat.id}
+                  className="rounded-md text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 border bg-teal-500/5 text-teal-600 border-teal-500/10 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20"
+                >
+                  {cat.name}
+                </span>
+              ))}
+            </div>
           )}
-          <span className="truncate">{item.name}</span>
-        </h3>
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-            {item.boxes_quantity} {t('sell.quantitySelect.box')} · {totalPieces} {t('sell.quantitySelect.pcs')}
-          </span>
-          <span className="text-sm font-bold text-teal-600 dark:text-teal-400">
-            {formatCurrency(item.unit_price)}
-          </span>
+
+          {/* Title & Code */}
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              {item.name}
+            </h3>
+            {item.code && (
+              <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono font-extrabold shrink-0">
+                {item.code}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {/* Stats Row: Boxes | Total Pcs */}
+          <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50/50 dark:bg-slate-950/20 border border-slate-100/85 dark:border-slate-800/80 rounded-xl p-2">
+            <div className="flex flex-col items-center justify-center text-center">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">{t('stock.table.boxes')}</span>
+              <span className="text-xs font-black text-slate-700 dark:text-slate-200 mt-0.5">{item.boxes_quantity}</span>
+            </div>
+            <div className="flex flex-col items-center justify-center text-center border-l border-slate-150 dark:border-slate-800">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">{t('stock.table.totalPcs')}</span>
+              <span className="text-xs font-black text-slate-700 dark:text-slate-200 mt-0.5">{totalPieces}</span>
+            </div>
+          </div>
+
+          {/* Footer Price / Stock Status */}
+          <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-slate-800/80">
+            <div className="flex flex-col">
+              <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('stock.table.unitPrice')}</span>
+              <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                {formatCurrency(item.unit_price)}
+              </span>
+            </div>
+            <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 ${
+              isLowStock
+                ? 'bg-rose-50 dark:bg-rose-950/30 text-rose-500 border border-rose-100/50 dark:border-rose-900/30'
+                : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100/50 dark:border-emerald-900/30'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isLowStock ? 'bg-rose-500' : 'bg-emerald-500'} animate-pulse`} />
+              {isLowStock ? t('dashboard.lowStock') : t('sell.inStock')}
+            </span>
+          </div>
         </div>
       </div>
     </button>
@@ -780,7 +917,9 @@ function MobileCartButton({ count, total, onClick }) {
 export default function SellPage() {
   const [buyerMode, setBuyerMode] = useState('walkin');
   const [selectedBuyer, setSelectedBuyer] = useState(null);
-  const [activeCategory, setActiveCategory] = useState(null);
+  const [activeAgeGroup, setActiveAgeGroup] = useState(null);
+  const [activeFormulation, setActiveFormulation] = useState(null);
+  const [activeTherapeutic, setActiveTherapeutic] = useState(null);
   const [selectorItem, setSelectorItem] = useState(null);
   const [cart, setCart] = useState([]);
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
@@ -792,15 +931,90 @@ export default function SellPage() {
   const { data: items = [], isLoading: itemsLoading } = useItems({});
   const createInvoice = useCreateInvoice();
 
-  const filteredItems = useMemo(() => {
+  const getFilteredCount = (type, categoryId) => {
     return items.filter((item) => {
-      const matchesCategory = !activeCategory || item.categories?.some((cat) => cat.id === activeCategory);
       const matchesSearch = !itemSearchQuery ||
         item.name?.toLowerCase().includes(itemSearchQuery.toLowerCase()) ||
         item.code?.toLowerCase().includes(itemSearchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+      if (!matchesSearch) return false;
+
+      if (type !== 'age_group') {
+        const matchesAgeGroup = !activeAgeGroup ||
+          item.categories?.some((cat) => cat.id === activeAgeGroup);
+        if (!matchesAgeGroup) return false;
+      } else {
+        const matchesAgeGroup = item.categories?.some((cat) => cat.id === categoryId);
+        if (!matchesAgeGroup) return false;
+      }
+
+      if (type !== 'formulation') {
+        const matchesFormulation = !activeFormulation ||
+          item.categories?.some((cat) => cat.id === activeFormulation);
+        if (!matchesFormulation) return false;
+      } else {
+        const matchesFormulation = item.categories?.some((cat) => cat.id === categoryId);
+        if (!matchesFormulation) return false;
+      }
+
+      if (type !== 'therapeutic') {
+        const matchesTherapeutic = !activeTherapeutic ||
+          item.categories?.some((cat) => cat.id === activeTherapeutic);
+        if (!matchesTherapeutic) return false;
+      } else {
+        const matchesTherapeutic = item.categories?.some((cat) => cat.id === categoryId);
+        if (!matchesTherapeutic) return false;
+      }
+
+      return true;
+    }).length;
+  };
+
+  const allAgeGroupCount = useMemo(() => {
+    return items.filter((item) => {
+      const matchesSearch = !itemSearchQuery || item.name?.toLowerCase().includes(itemSearchQuery.toLowerCase()) || item.code?.toLowerCase().includes(itemSearchQuery.toLowerCase());
+      const matchesForm = !activeFormulation || item.categories?.some((cat) => cat.id === activeFormulation);
+      const matchesTher = !activeTherapeutic || item.categories?.some((cat) => cat.id === activeTherapeutic);
+      return matchesSearch && matchesForm && matchesTher;
+    }).length;
+  }, [items, itemSearchQuery, activeFormulation, activeTherapeutic]);
+
+  const allFormulationCount = useMemo(() => {
+    return items.filter((item) => {
+      const matchesSearch = !itemSearchQuery || item.name?.toLowerCase().includes(itemSearchQuery.toLowerCase()) || item.code?.toLowerCase().includes(itemSearchQuery.toLowerCase());
+      const matchesAge = !activeAgeGroup || item.categories?.some((cat) => cat.id === activeAgeGroup);
+      const matchesTher = !activeTherapeutic || item.categories?.some((cat) => cat.id === activeTherapeutic);
+      return matchesSearch && matchesAge && matchesTher;
+    }).length;
+  }, [items, itemSearchQuery, activeAgeGroup, activeTherapeutic]);
+
+  const allTherapeuticCount = useMemo(() => {
+    return items.filter((item) => {
+      const matchesSearch = !itemSearchQuery || item.name?.toLowerCase().includes(itemSearchQuery.toLowerCase()) || item.code?.toLowerCase().includes(itemSearchQuery.toLowerCase());
+      const matchesAge = !activeAgeGroup || item.categories?.some((cat) => cat.id === activeAgeGroup);
+      const matchesForm = !activeFormulation || item.categories?.some((cat) => cat.id === activeFormulation);
+      return matchesSearch && matchesAge && matchesForm;
+    }).length;
+  }, [items, itemSearchQuery, activeAgeGroup, activeFormulation]);
+
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      const matchesSearch = !itemSearchQuery ||
+        item.name?.toLowerCase().includes(itemSearchQuery.toLowerCase()) ||
+        item.code?.toLowerCase().includes(itemSearchQuery.toLowerCase());
+      if (!matchesSearch) return false;
+
+      const matchesAgeGroup = !activeAgeGroup || item.categories?.some((cat) => cat.id === activeAgeGroup);
+      if (!matchesAgeGroup) return false;
+
+      const matchesFormulation = !activeFormulation || item.categories?.some((cat) => cat.id === activeFormulation);
+      if (!matchesFormulation) return false;
+
+      const matchesTherapeutic = !activeTherapeutic || item.categories?.some((cat) => cat.id === activeTherapeutic);
+      if (!matchesTherapeutic) return false;
+
+      return true;
     });
-  }, [items, activeCategory, itemSearchQuery]);
+  }, [items, activeAgeGroup, activeFormulation, activeTherapeutic, itemSearchQuery]);
 
   const cartItemIds = useMemo(() => new Set(cart.map((e) => e.item.id)), [cart]);
 
@@ -865,14 +1079,21 @@ export default function SellPage() {
 
           <CategoryFilterBar
             categories={categories}
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
-            items={items}
+            activeAgeGroup={activeAgeGroup}
+            setActiveAgeGroup={setActiveAgeGroup}
+            activeFormulation={activeFormulation}
+            setActiveFormulation={setActiveFormulation}
+            activeTherapeutic={activeTherapeutic}
+            setActiveTherapeutic={setActiveTherapeutic}
+            getFilteredCount={getFilteredCount}
+            allAgeGroupCount={allAgeGroupCount}
+            allFormulationCount={allFormulationCount}
+            allTherapeuticCount={allTherapeuticCount}
           />
 
           {/* Item Selection Grid */}
           {itemsLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 border border-transparent">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl h-48 animate-pulse" />
               ))}
@@ -884,13 +1105,13 @@ export default function SellPage() {
                 {t('kh' === t('common.save') ? 'រកមិនឃើញទំនិញទេ' : 'No items found')}
               </p>
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                {activeCategory
+                {(activeAgeGroup || activeFormulation || activeTherapeutic)
                   ? t('kh' === t('common.save') ? 'សាកល្បងជ្រើសរើសប្រភេទផ្សេងទៀត។' : 'Try selecting a different category.')
                   : t('kh' === t('common.save') ? 'បន្ថែមទំនិញនៅក្នុងទំព័រគ្រប់គ្រងស្តុក។' : 'Add items in the Stock Management page.')}
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
               {filteredItems.map((item) => (
                 <PosItemCard
                   key={item.id}
@@ -904,7 +1125,7 @@ export default function SellPage() {
         </div>
 
         {/* Right column — Cart Panel (desktop) */}
-        <div className="hidden lg:block w-80 xl:w-96 shrink-0">
+        <div className="hidden lg:block w-72 xl:w-80 shrink-0">
           <div className="sticky top-24">
             <CartPanel
               cart={cart}

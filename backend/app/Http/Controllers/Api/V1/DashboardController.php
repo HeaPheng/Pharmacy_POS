@@ -15,7 +15,7 @@ class DashboardController extends Controller
      */
     public function stats(): JsonResponse
     {
-        $totalInventoryValue = (float) (Item::selectRaw('SUM(unit_price * boxes_quantity * pieces_per_box) as total')->value('total') ?? 0);
+        $totalInventoryValue = (float) (Item::selectRaw('SUM(unit_price * boxes_quantity) as total')->value('total') ?? 0);
         $totalProductsCount = Item::count();
         $lowStockCount = Item::where('boxes_quantity', '<=', 5)->count();
         $todayInvoicesCount = Invoice::whereDate('created_at', today())->count();

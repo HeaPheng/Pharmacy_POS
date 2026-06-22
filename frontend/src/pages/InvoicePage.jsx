@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useInvoice } from '../hooks/useApi';
-import { useTranslation, formatCurrency } from '../i18n/translations';
+import { useTranslation, formatCurrency, getCategoryDisplayName } from '../i18n/translations';
 
 const API_BASE = (() => {
   if (typeof window !== 'undefined' && import.meta.env.DEV) {
@@ -33,7 +33,7 @@ function formatTime(dateStr) {
 export default function InvoicePage() {
   const { id } = useParams();
   const { data: invoice, isLoading, isError } = useInvoice(id);
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
 
   if (isLoading) {
     return (
@@ -193,7 +193,7 @@ export default function InvoicePage() {
                     <p className="text-sm font-semibold text-slate-800">{lineItem.item?.name || 'Unknown Item'}</p>
                     {lineItem.item?.categories && lineItem.item.categories.length > 0 && (
                       <p className="text-[10px] text-slate-400 mt-0.5">
-                        {lineItem.item.categories.map((c) => c.name).join(', ')}
+                        {lineItem.item.categories.map((c) => getCategoryDisplayName(c.name, lang)).join(', ')}
                       </p>
                     )}
                   </td>
