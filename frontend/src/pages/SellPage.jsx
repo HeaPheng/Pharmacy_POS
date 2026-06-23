@@ -28,13 +28,13 @@ function generateInvoiceNumber() {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Buyer Info Panel
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function BuyerInfoPanel({ 
-  buyerMode, 
-  setBuyerMode, 
-  selectedBuyer, 
+function BuyerInfoPanel({
+  buyerMode,
+  setBuyerMode,
+  selectedBuyer,
   setSelectedBuyer,
   itemSearchQuery,
-  setItemSearchQuery 
+  setItemSearchQuery
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -80,9 +80,9 @@ function BuyerInfoPanel({
     } catch (err) {
       console.error('Failed to create buyer:', err);
       const isUniqueError = err.response?.data?.errors?.phone?.[0]?.includes('taken') ||
-                            err.response?.data?.message?.includes('unique') ||
-                            err.message?.includes('422');
-      
+        err.response?.data?.message?.includes('unique') ||
+        err.message?.includes('422');
+
       if (isUniqueError) {
         toast.error(t('kh' === t('common.save') ? 'លេខទូរស័ព្ទនេះត្រូវបានប្រើប្រាស់រួចហើយ' : 'This phone number is already registered'));
       } else {
@@ -111,11 +111,10 @@ function BuyerInfoPanel({
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => { setBuyerMode('walkin'); setSelectedBuyer(null); setSearchTerm(''); }}
-          className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 cursor-pointer ${
-            buyerMode === 'walkin'
+          className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 cursor-pointer ${buyerMode === 'walkin'
               ? 'bg-teal-600 text-white shadow-sm hover:bg-teal-700'
               : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200/50 dark:border-slate-800'
-          }`}
+            }`}
         >
           <span className="flex items-center justify-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,11 +125,10 @@ function BuyerInfoPanel({
         </button>
         <button
           onClick={() => setBuyerMode('known')}
-          className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 cursor-pointer ${
-            buyerMode === 'known'
+          className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 cursor-pointer ${buyerMode === 'known'
               ? 'bg-teal-600 text-white shadow-sm hover:bg-teal-700'
               : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200/50 dark:border-slate-800'
-          }`}
+            }`}
         >
           <span className="flex items-center justify-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -520,7 +518,7 @@ function QuantitySelector({ item, onAdd, onClose }) {
               <svg className="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
-              {t('kh' === t('common.save') ? 'លើសពីស្តុកដែលមាន' : 'Exceeds available stock')} ({availablePieces} {t('sell.quantitySelect.pcs')})
+              {t('kh' === t('common.save') ? 'លើសពីស្តុកដែលមានស្រាប់' : 'Exceeds available stock')} ({availablePieces} {t('sell.quantitySelect.pcs')})
             </p>
           )}
         </div>
@@ -568,13 +566,12 @@ function PosItemCard({ item, isInCart, onSelect }) {
     <button
       onClick={() => !outOfStock && onSelect(item)}
       disabled={outOfStock}
-      className={`group relative text-left bg-white dark:bg-slate-900 border rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-slate-100/50 dark:hover:shadow-none hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full ${
-        isInCart
+      className={`group relative text-left bg-white dark:bg-slate-900 border rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-slate-100/50 dark:hover:shadow-none hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full ${isInCart
           ? 'border-teal-500 ring-1 ring-teal-500/20'
           : outOfStock
-          ? 'border-slate-200 dark:border-slate-800 opacity-50 cursor-not-allowed bg-slate-50 dark:bg-slate-950'
-          : 'border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer'
-      }`}
+            ? 'border-slate-200 dark:border-slate-800 opacity-50 cursor-not-allowed bg-slate-50 dark:bg-slate-950'
+            : 'border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer'
+        }`}
     >
       {isInCart && (
         <div className="absolute top-2.5 right-2.5 z-20 w-7 h-7 rounded-full bg-teal-600 flex items-center justify-center shadow-lg border border-teal-500/30">
@@ -688,11 +685,10 @@ function PosItemCard({ item, isInCart, onSelect }) {
                 {formatCurrency(item.unit_price)}
               </span>
             </div>
-            <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 ${
-              isLowStock
+            <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 ${isLowStock
                 ? 'bg-rose-50 dark:bg-rose-950/30 text-rose-500 border border-rose-100/50 dark:border-rose-900/30'
                 : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100/50 dark:border-emerald-900/30'
-            }`}>
+              }`}>
               <span className={`w-1.5 h-1.5 rounded-full ${isLowStock ? 'bg-rose-500' : 'bg-emerald-500'} animate-pulse`} />
               {isLowStock ? t('dashboard.lowStock') : t('sell.inStock')}
             </span>
